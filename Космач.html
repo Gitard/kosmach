@@ -1,0 +1,493 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <title>Космач</title>
+  <link id="link" rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACGElEQVRYhb2XvWsUQRiHn9NKwQ8iWGgUCaggNiFgPO8y+3ttrGwsFBTsLCxsYiFqJSgIBvwDUiSK2AhqZyGIggo2BsRCEEQLBY3EoCbRkNxazHLZ8z6y3O7cwFS7M8+z78z7zg7kajoBGgPW5punq2bDoBmwGKKLPYaX+0BTHm4xaAHc4R4KaGwFXpeYgqFNPYC7QdCvZgGLQRd6IGC3WsMtBvsEh7YGhLvdYLMdBGKIzgYUsNHOcItBTwiUliXQo9UFbBaqAwH45T6/xg1f+wX0vsUyHA0gMLIPbC4Fn4TKNqhsgOgMaD4lMRpAwCpgywl8GtTf+FwPU3LXAwhEI6BaAvnsl6RB4E5K4EYAAR0EW0oANbBL1He7qj4qdYGrAQTcINjf1Dovg56CHoB+/Lc5LwcQqO5pX4KbsuBcAAH1g33PJuBOBxA4sKW5DrSNQIg6UF4H9jZDKa75lC2+rQE9zyAwD9ofQoDGYtNWYBrcjlAC4xkEPoA2BxKIrmQQeA2UAsDL20Evsx3H7ljB8OpOsBfZUtBi0E9wx4uCD4C9yg6v99+gUznhQ+vBnnUBT6VkfoF33QtYnFOAEuhxasI/oG8dgHNgX1MRWMgrANjtZLI3YEfAOdBimzPgWrJn7iZjZgoQ0HnQTX8YAb4k3/fRsCXftQj2ESp7V8a5k6B7BQgMb2whtctfwzQOmvD/gFLze6vfFf8BWeh3jMf3RBMAAAAASUVORK5CYII="/>
+  <meta charset="utf-8">
+  <style>
+  * { margin:0; padding:0; }
+  html, body { width:100%; height:100%; }
+  canvas { display:block; }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+var context = document.getElementById('canvas').getContext('2d');
+var img = new Image();
+img.src = link.getAttribute("href");
+var oldDate = Date.now(),
+    G=6.67384e-11,
+    zoom=4e-5,
+    shipr=12,
+    shipa=60,
+    shipmaxa=60,
+    plan=[],
+    gplan=[],
+    pressed = {},
+    nfps=0,
+    time=0,
+    fire=0,
+    lan=0,
+    ng=0,
+    fps=60,
+    tx=1,
+    dV=0,
+    Sp=3,
+    Rp=0,
+    ms='',
+    tms=600,
+    shipb,
+    shipdb,
+    h,
+    V;
+
+// База объектов Солнечной системы.
+// Тип, название, масса, радиус, радиус орбиты, период вращения, цвет.
+var solsys=[
+0, "Солнце", 1.9891e30, 6.9551e8, 0, 25.5, "Yellow",
+1, "Меркурий", 3.33022e23, 2439700, 57909227000, 58.646, "DimGray",
+1, "Венера", 4.8685e24, 6051500, 108208930000, 243.023, "LightCyan",
+1, "Земля", 5.9726e24, 6378100, 149598261000, 0.99726968, "RoyalBlue",
+2, "Луна", 7.3477e22, 1738140, 384399000, 27.321582, "Tan",
+1, "Марс", 6.4185e23, 3396200, 227943820000, 1.025954, "DarkSalmon",
+];
+
+// Преобразование базы в удобочитаемый вид.
+for (var i=0, k=0; i<solsys.length/7; i++, k=i*7) {
+  plan[i]={};
+  plan[i].id=solsys[k];
+  plan[i].name=solsys[k+1];
+  plan[i].mg=solsys[k+2]*G;
+  plan[i].R=solsys[k+3];
+  plan[i].a=solsys[k+4];
+  plan[i].v2=2*Math.PI*plan[i].R/solsys[k+5]/24/60/60;
+  plan[i].color=solsys[k+6];
+  if (plan[i].id==1) {
+    plan[i].db=Math.sqrt(plan[0].mg/plan[i].a)/plan[i].a/60;
+    var mg=plan[i].mg;
+    plan[i].v1=Math.sqrt(plan[0].mg/plan[i].a);
+  }
+  if (plan[i].id==2) {
+    plan[i].db=Math.sqrt(mg/plan[i].a)/plan[i].a/60;
+    plan[i].v1=Math.sqrt(mg/plan[i].a);
+  }
+  gplan[i]=i;
+}
+
+// Загрузка сохранения и генерация начального положения.
+plan[0].x=0;
+plan[0].y=0;
+for (var i=1; i<plan.length; i++) {
+  if (localStorage.getItem("planb"+plan[i].name)) plan[i].b=+localStorage.getItem("planb"+plan[i].name);
+  else plan[i].b=2*Math.PI*Math.random();
+  if (plan[i].id==1) {
+    var i1=i;
+    plan[i].x=plan[i].a*Math.sin(plan[i].b);
+    plan[i].y=plan[i].a*Math.cos(plan[i].b);
+  }
+  if (plan[i].id==2) {
+    plan[i].x=plan[i1].x+plan[i].a*Math.sin(plan[i].b);
+    plan[i].y=plan[i1].y+plan[i].a*Math.cos(plan[i].b);
+  }
+}
+if (localStorage.getItem("shipx")) {
+  var b=+localStorage.getItem("b");
+  var shipx=+localStorage.getItem("shipx");
+  var shipy=+localStorage.getItem("shipy");
+  var shipvx=+localStorage.getItem("shipvx");
+  var shipvy=+localStorage.getItem("shipvy");
+  zoom=+localStorage.getItem("zoom");
+  shipa=+localStorage.getItem("shipa");
+  shipmaxa=+localStorage.getItem("shipmaxa");
+  shipb=+localStorage.getItem("shipb");
+  shipdb=+localStorage.getItem("shipdb");
+  time=+localStorage.getItem("time");
+  lan=+localStorage.getItem("lan");
+  tx=+localStorage.getItem("tx");
+  dV=+localStorage.getItem("dV");
+  h=+localStorage.getItem("h");
+  V=+localStorage.getItem("V");
+  Sp=+localStorage.getItem("Sp");
+  Rp=+localStorage.getItem("Rp");
+  ms=localStorage.getItem("ms");
+}
+else {
+  var b=2*Math.PI*Math.random();
+  var shipx=plan[3].a*Math.sin(plan[3].b)+(plan[3].R+shipr)*Math.sin(b);
+  var shipy=plan[3].a*Math.cos(plan[3].b)+(plan[3].R+shipr)*Math.cos(b);
+  var shipvx=plan[3].v1*Math.cos(plan[3].b)+plan[3].v2*Math.cos(b);
+  var shipvy=-plan[3].v1*Math.sin(plan[3].b)-plan[3].v2*Math.sin(b);
+}
+
+// Ядро программы.
+calc();
+
+// Основная функция.
+function calc() {
+  requestAnimationFrame(calc);
+  if (ng==1) newgame(), ng=0;
+  canvaskey();
+  gravity();
+  motion();
+  collision();
+  draw();
+  counters();
+  quests();
+}
+
+// Обработчики нажатй клавиш.
+window.onkeydown = function(event) {
+  pressed[event.keyCode] = true;
+  switch (event.keyCode) {
+    case 33: // Pg Up - увеличение
+      if (zoom<1) zoom*=1.1;
+      if (zoom>1) zoom=1;
+      break;
+    case 34: // Pg Down - уменьшение
+      zoom*=0.9;
+      break;
+    case 107: // + - ускорение времени
+      tx*=2;
+      break;
+    case 109: // - - торможение времени
+      tx/=2;
+      if (tx<1) tx=1;
+      break;
+    case 36: // Home - увеличение мощности двигателя
+      if (shipmaxa>shipa) shipa++;
+      break;
+    case 35: // End - уменьшение мощности двигателя
+      if (shipa>1) shipa--;
+      break;
+    case 16: // Shift - листание планет вперед
+      if (Rp==0) Rp=1;
+      else Sp++, Rp=0;
+      if (Sp==plan.length) Sp=0;
+      break;
+    case 17: // Ctrl - листание планет назад
+      if (Rp==1) Rp=0;
+      else Sp--, Rp=1;
+      if (Sp==-1) Sp+=plan.length;
+      break;
+  }
+}
+window.onkeyup = function(event) {
+  delete pressed[event.keyCode];
+  switch (event.keyCode) {
+    case 78: // N - новая игра
+      if (confirm("Начать заново?")) newgame();
+      break;
+    case 40: // ↓ - постоянная тяга
+      if (pressed[38]==true) delete pressed[38];
+      else pressed[38]=true;
+      break;
+  }
+}
+
+// Назначение быстрых клавиш.
+function canvaskey() {
+  for (var key in pressed) {
+    if (pressed[key]) {
+      switch (+key) {
+        case 37: // ← - вращение против часовой
+          if (dV>=0.01) {
+            b+=0.03;
+            dV-=0.01;
+          }
+          if (b>2*Math.PI) b-=2*Math.PI;
+          break;
+        case 39: // → - вращение по часовой
+          if (dV>=0.01) {
+            b-=0.03;
+            dV-=0.01;
+          }
+          if (b<-2*Math.PI) b+=2*Math.PI;
+          break;
+        case 38: // ↑ - разгон
+          if (dV>=shipa/60) {
+            fire=1;
+            if(lan==1) tx=1, lan=0;
+            shipvx+=shipa*Math.sin(b)/60;
+            shipvy+=shipa*Math.cos(b)/60;
+            dV-=shipa/60;
+          }
+          else if (dV>0) {
+            fire=1;
+            if(lan==1) tx=1, lan=0;
+            shipvx+=dV*Math.sin(b);
+            shipvy+=dV*Math.cos(b);
+            dV=0;
+          }
+          break;
+      }
+    }
+  }
+}
+
+// Сохранение при выходе.
+window.onbeforeunload = function() {
+  for (var i=1; i<plan.length; i++) {
+    localStorage.setItem("planb"+plan[i].name, plan[i].b)
+  }
+  localStorage.setItem("b", b);
+  localStorage.setItem("shipx", shipx);
+  localStorage.setItem("shipy", shipy);
+  localStorage.setItem("shipvx", shipvx);
+  localStorage.setItem("shipvy", shipvy);
+  localStorage.setItem("zoom", zoom);
+  localStorage.setItem("shipa", shipa);
+  localStorage.setItem("shipmaxa", shipmaxa);
+  localStorage.setItem("shipb", shipb);
+  localStorage.setItem("shipdb", shipdb);
+  localStorage.setItem("time", time);
+  localStorage.setItem("lan", lan);
+  localStorage.setItem("tx", tx);
+  localStorage.setItem("dV", dV);
+  localStorage.setItem("h", h);
+  localStorage.setItem("V", V);
+  localStorage.setItem("Sp", Sp);
+  localStorage.setItem("Rp", Rp);
+  localStorage.setItem("ms", ms);
+}
+
+// Расчет гравитации.
+function gravity() {
+  for (var i=0; i<plan.length; i++) {
+    var dx=plan[i].x-shipx;
+    var dy=plan[i].y-shipy;
+    var rr=dx*dx+dy*dy;
+    plan[i].r=Math.sqrt(rr);
+    plan[i].g=plan[i].mg/rr;
+    if (lan==0) {
+      shipvx+=plan[i].g*dx/plan[i].r/60*tx;
+      shipvy+=plan[i].g*dy/plan[i].r/60*tx;
+    }
+  }
+}
+
+// Расчет положения с учетом движения.
+function motion() {
+  if (lan==0) {
+    shipx+=shipvx/60*tx;
+    shipy+=shipvy/60*tx;
+  }
+  for (var i=1; i<plan.length; i++) {
+    plan[i].b+=plan[i].db*tx;
+    if (plan[i].b>2*Math.PI) plan[i].b-=2*Math.PI;
+    if (plan[i].id==1) {
+      var i1=i;
+      plan[i].x=plan[i].a*Math.sin(plan[i].b);
+      plan[i].y=plan[i].a*Math.cos(plan[i].b);
+    }
+    if (plan[i].id==2) {
+      plan[i].x=plan[i1].x+plan[i].a*Math.sin(plan[i].b);
+      plan[i].y=plan[i1].y+plan[i].a*Math.cos(plan[i].b);
+    }
+  }
+}
+
+// Расчет столкновения и движения вместе с поверхностью.
+function collision() {
+  gplan.sort(sortplan);
+  speed(gplan[0]);
+  if (lan==0) {
+    var sinb=(shipx-plan[gplan[0]].x)/plan[gplan[0]].r;
+    var cosb=(shipy-plan[gplan[0]].y)/plan[gplan[0]].r;
+    var dvx=plan[gplan[0]].vx-shipvx+plan[gplan[0]].v2*cosb;
+    var dvy=plan[gplan[0]].vy-shipvy-plan[gplan[0]].v2*sinb;
+    V=Math.sqrt(dvx*dvx+dvy*dvy);
+    h=plan[gplan[0]].r-plan[gplan[0]].R-shipr;
+  }
+  if (h<=0 || lan==1) {
+    if (lan==0) {
+      if (V>30) alert("Вы разбились."), ng=1;
+      lan=1, h=V=0;
+      shipb=Math.acos(cosb);
+      if (sinb<0) shipb=2*Math.PI-shipb;
+      shipdb=plan[gplan[0]].v2/plan[gplan[0]].R/60;
+    }
+    shipb+=shipdb*tx;
+    if (shipb>2*Math.PI) shipb-=2*Math.PI;
+    b+=shipdb*tx;
+    if (b>2*Math.PI) b-=2*Math.PI;
+    sinb=Math.sin(shipb);
+    cosb=Math.cos(shipb);
+    shipx=plan[gplan[0]].x+(plan[gplan[0]].R+shipr)*sinb;
+    shipy=plan[gplan[0]].y+(plan[gplan[0]].R+shipr)*cosb;
+    shipvx=plan[gplan[0]].vx+plan[gplan[0]].v2*cosb;
+    shipvy=plan[gplan[0]].vy-plan[gplan[0]].v2*sinb;
+  }
+}
+
+// Вывод на холст.
+function draw() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  context.font = "12px Arial";
+  context.fillStyle="Gainsboro";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  for (var i=0; i<plan.length; i++) {
+    var x=(plan[i].x-shipx)*zoom+canvas.width/2;
+    var y=(plan[i].y-shipy)*zoom+canvas.height/2;
+    var R=plan[i].R*zoom;
+    if (R<5) {
+      if (i>0) R=2*plan[i].R/plan[3].R+3;
+      else R=10;
+    }
+    context.beginPath();
+    context.arc(x, y, R, 0, 7);
+    context.fillStyle=plan[i].color;
+    context.fill();
+    context.fillStyle="black";
+    if (zoom>7e-8 || plan[i].id!=2) context.fillText(plan[i].name, x+10, y-10);
+  }
+  context.translate(canvas.width/2, canvas.height/2);
+  context.rotate(Math.PI-b);
+  if (fire==1) {
+    context.strokeStyle="OrangeRed";
+    context.lineCap = "round";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(0, 0);
+    context.lineTo(0, 12+4*shipa/shipmaxa);
+    context.stroke();
+    fire=0;
+  }
+  context.drawImage(img, -12, -12, 24, 24);
+  context.rotate(Math.PI+b);
+  context.translate(-canvas.width/2, -canvas.height/2);
+}
+
+// Счетчики.
+function counters() {
+  context.fillStyle="black";
+  nfps++;
+  if (nfps==10) {
+    var date=Date.now();
+    fps=Math.round(10000/(date-oldDate));
+    oldDate=date;
+    nfps=0;
+  }
+  time+=tx/60;
+  var days=Math.floor(time/86400);
+  var hours=Math.floor((time-86400*days)/3600);
+  var mins=Math.floor((time-86400*days-3600*hours)/60);
+  var secs=Math.floor(time-86400*days-3600*hours-60*mins);
+  context.fillText(fps + " fps", 4, 13);
+  context.fillText("zoom: " + zoom.toPrecision(2), 4, 26);
+  context.fillText("ΔV: " + dV.toFixed(1) + " m/s", 4, 39);
+  context.fillText("a: " + Math.round(shipa) + "/" + shipmaxa + " m/s\u00B2", 4, 52);
+  context.fillText(plan[gplan[0]].name, 4, 78);
+  context.fillText("g: " + plan[gplan[0]].g.toPrecision(3) + " m/s\u00B2", 4, 91);
+  var dvx=plan[gplan[0]].vx-shipvx;
+  var dvy=plan[gplan[0]].vy-shipvy;
+  context.fillText("v: " + Math.round(Math.sqrt(dvx*dvx+dvy*dvy)) + " m/s", 4, 104);
+  context.fillText("V: " + Math.round(V) + " m/s", 4, 117);
+  context.fillText("h: " + Math.round(h) + " m", 4, 130);
+  context.fillText("r: " + Math.round(plan[gplan[0]].r/1000) + " km", 4, 143);
+  context.fillText(plan[gplan[1]].name, 4, 169);
+  context.fillText("g: " + plan[gplan[1]].g.toPrecision(3) + " m/s\u00B2", 4, 182);
+  speed(gplan[1]);
+  dvx=plan[gplan[1]].vx-shipvx;
+  dvy=plan[gplan[1]].vy-shipvy;
+  context.fillText("v: " + Math.round(Math.sqrt(dvx*dvx+dvy*dvy)) + " m/s", 4, 195);
+  context.fillText("r: " + Math.round(plan[gplan[1]].r/1000) + " km", 4, 208);
+  context.fillText(plan[gplan[2]].name, 4, 235);
+  context.fillText("g: " + plan[gplan[2]].g.toPrecision(3) + " m/s\u00B2", 4, 247);
+  speed(gplan[2]);
+  dvx=plan[gplan[2]].vx-shipvx;
+  dvy=plan[gplan[2]].vy-shipvy;
+  context.fillText("v: " + Math.round(Math.sqrt(dvx*dvx+dvy*dvy)) + " m/s", 4, 260);
+  context.fillText("r: " + Math.round(plan[gplan[2]].r/1000) + " km", 4, 273);
+  context.fillText("x" + tx, 4, canvas.height-20);
+  context.fillText(days + "d " + hours + "h " + mins + "m " + secs + "s", 4, canvas.height-7);
+  context.textAlign="end";
+  context.fillText(plan[Sp].name, canvas.width-4, 13);
+  speed(Sp);
+  dvx=plan[Sp].vx-shipvx;
+  dvy=plan[Sp].vy-shipvy;
+  if (Rp==1) {
+    var sinb=(shipx-plan[Sp].x)/plan[Sp].r;
+    var cosb=(shipy-plan[Sp].y)/plan[Sp].r;
+    dvx+=plan[Sp].v2*cosb;
+    dvy-=plan[Sp].v2*sinb;
+    context.fillText("поверхность", canvas.width-4, 26);
+  }
+  else context.fillText("центр", canvas.width-4, 26);
+  var v=Math.sqrt(dvx*dvx+dvy*dvy);
+  context.fillText(Math.round(v) + " m/s", canvas.width-4, 39);
+  if (lan==0 || gplan[0]!=Sp || Rp==0) {
+    context.strokeStyle="black";
+    context.lineCap = "round";
+    context.lineWidth = 0.3;
+    context.beginPath();
+    context.moveTo(canvas.width/2, canvas.height/2);
+    context.lineTo(canvas.width/2-100*dvx/v, canvas.height/2-100*dvy/v);
+    context.stroke();
+  }
+}
+
+// Задания.
+function quests() {
+  if (time<3 && dV==0) {
+    ms="Квестов пока нет, лети куда хочешь.";
+    dV=30000;
+    tms=1000;
+  }
+  context.textAlign="center";
+  if (tms>0) context.fillText(ms, canvas.width/2, canvas.height/4), tms--;
+  context.textAlign="start";
+}
+
+// Способ сортировки планет.
+function sortplan(aa, bb){
+  return plan[bb].g-plan[aa].g;
+}
+
+// Расчет скорости планеты.
+function speed(p){
+  if (plan[p].id==0) {
+    plan[p].vx=0;
+    plan[p].vy=0;
+  }
+  if (plan[p].id==1) {
+    plan[p].vx=plan[p].v1*Math.cos(plan[p].b);
+    plan[p].vy=-plan[p].v1*Math.sin(plan[p].b);
+  }
+  if (plan[p].id==2) {
+    for (var i=p; true; i--) {
+      if (plan[i].id!=1) continue;
+      plan[p].vx=plan[i].v1*Math.cos(plan[i].b)+plan[p].v1*Math.cos(plan[p].b);
+      plan[p].vy=-plan[i].v1*Math.sin(plan[i].b)-plan[p].v1*Math.sin(plan[p].b);
+      break;
+    }
+  }
+}
+
+// Играть заново.
+function newgame() {
+  zoom=4e-5, shipa=shipmaxa=60, nfps=time=fire=lan=0;
+  pressed={}, tx=1, dV=0, Sp=3, Rp=0;
+  for (var i=1; i<plan.length; i++) {
+    plan[i].b=2*Math.PI*Math.random();
+    if (plan[i].id==1) {
+      var i1=i;
+      plan[i].x=plan[i].a*Math.sin(plan[i].b);
+      plan[i].y=plan[i].a*Math.cos(plan[i].b);
+    }
+    if (plan[i].id==2) {
+      plan[i].x=plan[i1].x+plan[i].a*Math.sin(plan[i].b);
+      plan[i].y=plan[i1].y+plan[i].a*Math.cos(plan[i].b);
+    }
+  }
+  b=2*Math.PI*Math.random();
+  shipx=plan[3].a*Math.sin(plan[3].b)+(plan[3].R+shipr)*Math.sin(b);
+  shipy=plan[3].a*Math.cos(plan[3].b)+(plan[3].R+shipr)*Math.cos(b);
+  shipvx=plan[3].v1*Math.cos(plan[3].b)+plan[3].v2*Math.cos(b);
+  shipvy=-plan[3].v1*Math.sin(plan[3].b)-plan[3].v2*Math.sin(b);
+}
+
+</script>
+</body>
+</html>
