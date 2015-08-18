@@ -340,7 +340,7 @@ function draw() {
     context.fillStyle=plan[i].color;
     context.fill();
     context.fillStyle="black";
-    if (zoom>7e-8 || plan[i].id!=2) context.fillText(plan[i].name, x+10, y-10);
+    if (zoom*plan[i].a>42 || i==0) context.fillText(plan[i].name, x+10, y-10);
   }
   context.translate(canvas.width/2, canvas.height/2);
   context.rotate(Math.PI-b);
