@@ -34,7 +34,7 @@ var oldDate = Date.now(),
     tx=1,
     dV=0,
     Sp=3,
-    Rp=0,
+    Rp=1,
     ms='',
     tms=600,
     shipb,
@@ -306,7 +306,7 @@ function collision() {
         alert("Жесткая посадка. Двигатель стал работать хуже.");
         pressed={};
         shipmaxa=Math.round(shipmaxa*(100-V)/80);
-        shipa=0;
+        if (shipa>shipmaxa) shipa=shipmaxa;
       }
       lan=1, h=V=0;
       shipb=Math.acos(cosb);
@@ -438,7 +438,7 @@ function counters() {
 function quests() {
   if (time<3 && dV==0) {
     ms="Квестов пока нет, лети куда хочешь.";
-    dV=30000;
+    dV=40000;
     tms=1000;
   }
   context.textAlign="center";
@@ -474,7 +474,7 @@ function speed(p){
 // Играть заново.
 function newgame() {
   zoom=4e-5, shipa=shipmaxa=60, nfps=time=fire=lan=0;
-  pressed={}, tx=1, dV=0, Sp=3, Rp=0;
+  pressed={}, tx=1, dV=0, Sp=3, Rp=1;
   for (var i=1; i<plan.length; i++) {
     plan[i].b=2*Math.PI*Math.random();
     if (plan[i].id==1) {
