@@ -305,7 +305,7 @@ function collision() {
       else if (V>30) {
         alert("Жесткая посадка. Двигатель стал работать хуже.");
         pressed={};
-        shipmaxa=Math.round(shipmaxa*(V-30)/80);
+        shipmaxa=Math.round(shipmaxa*(100-V)/80);
         shipa=0;
       }
       lan=1, h=V=0;
