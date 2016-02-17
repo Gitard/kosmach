@@ -18,6 +18,7 @@ var img = new Image();
 img.src = link.getAttribute("href");
 var oldDate = Date.now(),
     G=6.67384e-11,
+    Rc=8.31,
     zoom=4e-5,
     shipr=12,
     shipa=60,
@@ -43,18 +44,18 @@ var oldDate = Date.now(),
     V;
 
 // База объектов Солнечной системы.
-// Тип, название, масса, радиус, радиус орбиты, период вращения, цвет.
+// Тип, название, масса (кг), радиус (м), радиус орбиты (м), период вращения (дни), цвет, M/T, давление атмосферы (Па).
 var solsys=[
-0, "Солнце", 1.9891e30, 6.9551e8, 0, 25.5, "Yellow",
-1, "Меркурий", 3.33022e23, 2439700, 57909227000, 58.646, "DimGray",
-1, "Венера", 4.8685e24, 6051500, 108208930000, 243.023, "LightCyan",
-1, "Земля", 5.9726e24, 6378100, 149598261000, 0.99726968, "RoyalBlue",
-2, "Луна", 7.3477e22, 1738140, 384399000, 27.321582, "Tan",
-1, "Марс", 6.4185e23, 3396200, 227943820000, 1.025954, "DarkSalmon",
+0, "Солнце", 1.9891e30, 6.9551e8, 0, 25.5, "Yellow", 0.002/5778, 56,
+1, "Меркурий", 3.33022e23, 2439700, 57909227000, 58.646, "DimGray", 0, 0,
+1, "Венера", 4.8685e24, 6051500, 108208930000, 243.023, "LightCyan", 0.042/735, 9200000,
+1, "Земля", 5.9726e24, 6378100, 149598261000, 0.99726968, "RoyalBlue", 0.029/300, 101325,
+2, "Луна", 7.3477e22, 1738140, 384399000, 27.321582, "Tan", 0, 0,
+1, "Марс", 6.4185e23, 3396200, 227943820000, 1.025954, "DarkSalmon", 0.043/260, 636,
 ];
 
 // Преобразование базы в удобочитаемый вид.
-for (var i=0, k=0; i<solsys.length/7; i++, k=i*7) {
+for (var i=0, k=0; i<solsys.length/9; i++, k=i*9) {
   plan[i]={};
   plan[i].id=solsys[k];
   plan[i].name=solsys[k+1];
@@ -63,6 +64,8 @@ for (var i=0, k=0; i<solsys.length/7; i++, k=i*7) {
   plan[i].a=solsys[k+4];
   plan[i].v2=2*Math.PI*plan[i].R/solsys[k+5]/24/60/60;
   plan[i].color=solsys[k+6];
+  plan[i].k=solsys[k+7]/Rc;
+  plan[i].p=solsys[k+8];
   if (plan[i].id==1) {
     plan[i].db=Math.sqrt(plan[0].mg/plan[i].a)/plan[i].a/60;
     var mg=plan[i].mg;
@@ -79,7 +82,7 @@ for (var i=0, k=0; i<solsys.length/7; i++, k=i*7) {
 plan[0].x=0;
 plan[0].y=0;
 for (var i=1; i<plan.length; i++) {
-  if (localStorage.getItem("planb"+plan[i].name)) plan[i].b=+localStorage.getItem("planb"+plan[i].name);
+  if (localStorage.getItem("ks_planb"+plan[i].name)) plan[i].b=+localStorage.getItem("ks_planb"+plan[i].name);
   else plan[i].b=2*Math.PI*Math.random();
   if (plan[i].id==1) {
     var i1=i;
@@ -91,26 +94,26 @@ for (var i=1; i<plan.length; i++) {
     plan[i].y=plan[i1].y+plan[i].a*Math.cos(plan[i].b);
   }
 }
-if (localStorage.getItem("shipx")) {
-  var b=+localStorage.getItem("b");
-  var shipx=+localStorage.getItem("shipx");
-  var shipy=+localStorage.getItem("shipy");
-  var shipvx=+localStorage.getItem("shipvx");
-  var shipvy=+localStorage.getItem("shipvy");
-  zoom=+localStorage.getItem("zoom");
-  shipa=+localStorage.getItem("shipa");
-  shipmaxa=+localStorage.getItem("shipmaxa");
-  shipb=+localStorage.getItem("shipb");
-  shipdb=+localStorage.getItem("shipdb");
-  time=+localStorage.getItem("time");
-  lan=+localStorage.getItem("lan");
-  tx=+localStorage.getItem("tx");
-  dV=+localStorage.getItem("dV");
-  h=+localStorage.getItem("h");
-  V=+localStorage.getItem("V");
-  Sp=+localStorage.getItem("Sp");
-  Rp=+localStorage.getItem("Rp");
-  ms=localStorage.getItem("ms");
+if (localStorage.getItem("ks_shipx")) {
+  var b=+localStorage.getItem("ks_b");
+  var shipx=+localStorage.getItem("ks_shipx");
+  var shipy=+localStorage.getItem("ks_shipy");
+  var shipvx=+localStorage.getItem("ks_shipvx");
+  var shipvy=+localStorage.getItem("ks_shipvy");
+  zoom=+localStorage.getItem("ks_zoom");
+  shipa=+localStorage.getItem("ks_shipa");
+  shipmaxa=+localStorage.getItem("ks_shipmaxa");
+  shipb=+localStorage.getItem("ks_shipb");
+  shipdb=+localStorage.getItem("ks_shipdb");
+  time=+localStorage.getItem("ks_time");
+  lan=+localStorage.getItem("ks_lan");
+  tx=+localStorage.getItem("ks_tx");
+  dV=+localStorage.getItem("ks_dV");
+  h=+localStorage.getItem("ks_h");
+  V=+localStorage.getItem("ks_V");
+  Sp=+localStorage.getItem("ks_Sp");
+  Rp=+localStorage.getItem("ks_Rp");
+  ms=localStorage.getItem("ks_ms");
 }
 else {
   var b=2*Math.PI*Math.random();
@@ -129,6 +132,7 @@ function calc() {
   if (ng==1) newgame(), ng=0;
   canvaskey();
   gravity();
+  atmosphere();
   motion();
   collision();
   draw();
@@ -228,27 +232,27 @@ function canvaskey() {
 // Сохранение при выходе.
 window.onbeforeunload = function() {
   for (var i=1; i<plan.length; i++) {
-    localStorage.setItem("planb"+plan[i].name, plan[i].b)
+    localStorage.setItem("ks_planb"+plan[i].name, plan[i].b)
   }
-  localStorage.setItem("b", b);
-  localStorage.setItem("shipx", shipx);
-  localStorage.setItem("shipy", shipy);
-  localStorage.setItem("shipvx", shipvx);
-  localStorage.setItem("shipvy", shipvy);
-  localStorage.setItem("zoom", zoom);
-  localStorage.setItem("shipa", shipa);
-  localStorage.setItem("shipmaxa", shipmaxa);
-  localStorage.setItem("shipb", shipb);
-  localStorage.setItem("shipdb", shipdb);
-  localStorage.setItem("time", time);
-  localStorage.setItem("lan", lan);
-  localStorage.setItem("tx", tx);
-  localStorage.setItem("dV", dV);
-  localStorage.setItem("h", h);
-  localStorage.setItem("V", V);
-  localStorage.setItem("Sp", Sp);
-  localStorage.setItem("Rp", Rp);
-  localStorage.setItem("ms", ms);
+  localStorage.setItem("ks_b", b);
+  localStorage.setItem("ks_shipx", shipx);
+  localStorage.setItem("ks_shipy", shipy);
+  localStorage.setItem("ks_shipvx", shipvx);
+  localStorage.setItem("ks_shipvy", shipvy);
+  localStorage.setItem("ks_zoom", zoom);
+  localStorage.setItem("ks_shipa", shipa);
+  localStorage.setItem("ks_shipmaxa", shipmaxa);
+  localStorage.setItem("ks_shipb", shipb);
+  localStorage.setItem("ks_shipdb", shipdb);
+  localStorage.setItem("ks_time", time);
+  localStorage.setItem("ks_lan", lan);
+  localStorage.setItem("ks_tx", tx);
+  localStorage.setItem("ks_dV", dV);
+  localStorage.setItem("ks_h", h);
+  localStorage.setItem("ks_V", V);
+  localStorage.setItem("ks_Sp", Sp);
+  localStorage.setItem("ks_Rp", Rp);
+  localStorage.setItem("ks_ms", ms);
 }
 
 // Расчет гравитации.
@@ -263,6 +267,22 @@ function gravity() {
       shipvx+=plan[i].g*dx/plan[i].r/60*tx;
       shipvy+=plan[i].g*dy/plan[i].r/60*tx;
     }
+  }
+}
+
+// Расчет торможения в атмосфере.
+function atmosphere() {
+  gplan.sort(sortplan);
+  if (lan==0) {
+    var i=gplan[0];
+    speed(i);
+    var sinb=(shipx-plan[i].x)/plan[i].r;
+    var cosb=(shipy-plan[i].y)/plan[i].r;
+    var dvx=plan[i].vx-shipvx+plan[i].v2*cosb;
+    var dvy=plan[i].vy-shipvy-plan[i].v2*sinb;
+    V=Math.sqrt(dvx*dvx+dvy*dvy);
+    h=plan[i].r-plan[i].R-shipr;
+    var Ro=plan[i].p*plan[i].k*Math.exp(-plan[i].k*plan[i].mg/Math.pow(plan[i].r, 2)*h);
   }
 }
 
@@ -289,7 +309,6 @@ function motion() {
 
 // Расчет столкновения и движения вместе с поверхностью.
 function collision() {
-  gplan.sort(sortplan);
   speed(gplan[0]);
   if (lan==0) {
     var sinb=(shipx-plan[gplan[0]].x)/plan[gplan[0]].r;
@@ -438,12 +457,12 @@ function counters() {
 function quests() {
   if (time<3 && dV==0) {
     ms="Квестов пока нет, лети куда хочешь.";
-    dV=40000;
     tms=1000;
   }
   context.textAlign="center";
   if (tms>0) context.fillText(ms, canvas.width/2, canvas.height/4), tms--;
   context.textAlign="start";
+  if (lan==1 && gplan[0]==3) dV=40000;
 }
 
 // Способ сортировки планет.
