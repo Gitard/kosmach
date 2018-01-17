@@ -1,14 +1,20 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<title>Космач</title>
-	<link id="link" rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACGElEQVRYhb2XvWsUQRiHn9NKwQ8iWGgUCaggNiFgPO8y+3ttrGwsFBTsLCxsYiFqJSgIBvwDUiSK2AhqZyGIggo2BsRCEEQLBY3EoCbRkNxazHLZ8z6y3O7cwFS7M8+z78z7zg7kajoBGgPW5punq2bDoBmwGKKLPYaX+0BTHm4xaAHc4R4KaGwFXpeYgqFNPYC7QdCvZgGLQRd6IGC3WsMtBvsEh7YGhLvdYLMdBGKIzgYUsNHOcItBTwiUliXQo9UFbBaqAwH45T6/xg1f+wX0vsUyHA0gMLIPbC4Fn4TKNqhsgOgMaD4lMRpAwCpgywl8GtTf+FwPU3LXAwhEI6BaAvnsl6RB4E5K4EYAAR0EW0oANbBL1He7qj4qdYGrAQTcINjf1Dovg56CHoB+/Lc5LwcQqO5pX4KbsuBcAAH1g33PJuBOBxA4sKW5DrSNQIg6UF4H9jZDKa75lC2+rQE9zyAwD9ofQoDGYtNWYBrcjlAC4xkEPoA2BxKIrmQQeA2UAsDL20Evsx3H7ljB8OpOsBfZUtBi0E9wx4uCD4C9yg6v99+gUznhQ+vBnnUBT6VkfoF33QtYnFOAEuhxasI/oG8dgHNgX1MRWMgrANjtZLI3YEfAOdBimzPgWrJn7iZjZgoQ0HnQTX8YAb4k3/fRsCXftQj2ESp7V8a5k6B7BQgMb2whtctfwzQOmvD/gFLze6vfFf8BWeh3jMf3RBMAAAAASUVORK5CYII="/>
-	<meta charset="utf-8">
-	<style>
-	* { margin:0; padding:0; }
-	html, body { width:100%; height:100%; }
-	canvas { display:block; }
-	</style>
+<title>Космач</title>
+<link id="link" rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACGElEQVRYhb2XvWsUQRiHn9NKwQ8iWGgUCaggNiFgPO8y+3ttrGwsFBTsLCxsYiFqJSgIBvwDUiSK2AhqZyGIggo2BsRCEEQLBY3EoCbRkNxazHLZ8z6y3O7cwFS7M8+z78z7zg7kajoBGgPW5punq2bDoBmwGKKLPYaX+0BTHm4xaAHc4R4KaGwFXpeYgqFNPYC7QdCvZgGLQRd6IGC3WsMtBvsEh7YGhLvdYLMdBGKIzgYUsNHOcItBTwiUliXQo9UFbBaqAwH45T6/xg1f+wX0vsUyHA0gMLIPbC4Fn4TKNqhsgOgMaD4lMRpAwCpgywl8GtTf+FwPU3LXAwhEI6BaAvnsl6RB4E5K4EYAAR0EW0oANbBL1He7qj4qdYGrAQTcINjf1Dovg56CHoB+/Lc5LwcQqO5pX4KbsuBcAAH1g33PJuBOBxA4sKW5DrSNQIg6UF4H9jZDKa75lC2+rQE9zyAwD9ofQoDGYtNWYBrcjlAC4xkEPoA2BxKIrmQQeA2UAsDL20Evsx3H7ljB8OpOsBfZUtBi0E9wx4uCD4C9yg6v99+gUznhQ+vBnnUBT6VkfoF33QtYnFOAEuhxasI/oG8dgHNgX1MRWMgrANjtZLI3YEfAOdBimzPgWrJn7iZjZgoQ0HnQTX8YAb4k3/fRsCXftQj2ESp7V8a5k6B7BQgMb2whtctfwzQOmvD/gFLze6vfFf8BWeh3jMf3RBMAAAAASUVORK5CYII="/>
+<meta charset="utf-8">
+<style>
+* {
+	margin: 0;
+	padding: 0;
+}
+html, body {
+	width:100%;
+	height:100%;
+	overflow: hidden;
+}
+</style>
 </head>
 <body>
 <canvas id="canvas">Попробуй открыть в Браузере.</canvas>
@@ -60,15 +66,15 @@ var solsys=[
 // Преобразование базы в удобочитаемый вид.
 for (var i=0, k=0; i<solsys.length/9; i++, k=i*9) {
 	plan[i]={};
-	plan[i].id=solsys[k];
-	plan[i].name=solsys[k+1];
-	plan[i].mg=solsys[k+2]*G;
-	plan[i].R=solsys[k+3];
-	plan[i].a=solsys[k+4];
-	plan[i].v2=2*Math.PI*plan[i].R/solsys[k+5]/24/60/60;
-	plan[i].color=solsys[k+6];
-	plan[i].k=solsys[k+7]/Rc;
-	plan[i].p=solsys[k+8];
+	plan[i].id=solsys[k++];
+	plan[i].name=solsys[k++];
+	plan[i].mg=solsys[k++]*G;
+	plan[i].R=solsys[k++];
+	plan[i].a=solsys[k++];
+	plan[i].v2=2*Math.PI*plan[i].R/solsys[k++]/24/60/60;
+	plan[i].color=solsys[k++];
+	plan[i].k=solsys[k++]/Rc;
+	plan[i].p=solsys[k++];
 	if (plan[i].id==1) {
 		plan[i].db=Math.sqrt(plan[0].mg/plan[i].a)/plan[i].a/60;
 		var mg=plan[i].mg;
@@ -127,7 +133,8 @@ else {
 }
 
 // Ядро программы.
-window.requestAnimationFrame(calc);
+if (window.requestAnimationFrame) calc();
+else setInterval(calc, 16.67);
 
 // Основная функция.
 function calc() {
@@ -372,6 +379,7 @@ function draw() {
 			if (zoom*plan[i].a>42 || i==0) context.fillText(plan[i].name, x+10, y-10);
 		}
 	}
+	context.save();
 	context.translate(canvas.width/2, canvas.height/2);
 	context.rotate(Math.PI-b);
 	if (fire==1) {
@@ -385,8 +393,7 @@ function draw() {
 		fire=0;
 	}
 	context.drawImage(img, -12, -12, 24, 24);
-	context.rotate(Math.PI+b);
-	context.translate(-canvas.width/2, -canvas.height/2);
+	context.restore();
 }
 
 // Счетчики.

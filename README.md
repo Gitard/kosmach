@@ -1,4 +1,4 @@
-﻿# [Космач](https://gitard.github.io/kosmach/Космач.html)
+## [Космач](https://gitard.github.io/kosmach/Космач.html)
 
 ## Описание
 
